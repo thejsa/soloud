@@ -315,6 +315,7 @@ sources = [
 "src/backend/sdl2_static/soloud_sdl2_static.cpp",
 "src/backend/sdl_static/soloud_sdl_static.cpp",
 "src/backend/vita_homebrew/soloud_vita_homebrew.cpp",
+"src/backend/n3ds_homebrew/soloud_n3ds_homebrew.cpp",
 "src/backend/wasapi/soloud_wasapi.cpp",
 "src/backend/winmm/soloud_winmm.cpp",
 "src/backend/xaudio2/soloud_xaudio2.cpp",

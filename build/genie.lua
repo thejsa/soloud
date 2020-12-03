@@ -12,6 +12,7 @@ local WITH_JACK = 0
 local WITH_OSS = 0
 local WITH_COREAUDIO = 0
 local WITH_VITA_HOMEBREW = 0
+local WITH_N3DS_HOMEBREW = 0
 local WITH_NOSOUND = 0
 local WITH_MINIAUDIO = 0
 local WITH_NULL = 1
@@ -117,6 +118,11 @@ newoption {
 newoption {
 	trigger		  = "with-vita-homebrew-only",
 	description = "Only include PS Vita homebrew backend in build"
+}
+
+newoption {
+	trigger		  = "with-n3ds-homebrew-only",
+	description = "Only include Nintendo 3DS homebrew backend in build"
 }
 
 newoption {
@@ -316,12 +322,38 @@ if _OPTIONS["with-vita-homebrew-only"] then
 	WITH_OSS = 0
 	WITH_ALSA = 0
 	WITH_VITA_HOMEBREW = 1
+	WITH_N3DS_HOMEBREW = 0
+	WITH_COREAUDIO = 0
 	WITH_NOSOUND = 0
 	WITH_MINIAUDIO = 0
 
 	premake.gcc.cc = "arm-vita-eabi-gcc"
 	premake.gcc.cxx = "arm-vita-eabi-g++"
 	premake.gcc.ar = "arm-vita-eabi-ar"
+end
+
+if _OPTIONS["with-n3ds-homebrew-only"] then
+	WITH_SDL = 0
+	WITH_SDL2 = 0
+	WITH_SDL_STATIC = 0
+	WITH_SDL2_STATIC = 0
+	WITH_PORTAUDIO = 0
+	WITH_OPENAL = 0
+	WITH_XAUDIO2 = 0
+	WITH_WINMM = 0
+	WITH_WASAPI = 0
+	WITH_OSS = 0
+	WITH_ALSA = 0
+	WITH_VITA_HOMEBREW = 0
+	WITH_N3DS_HOMEBREW = 1
+	WITH_COREAUDIO = 0
+	WITH_NOSOUND = 0
+	WITH_MINIAUDIO = 0
+
+	premake.gcc.cc = "arm-none-eabi-gcc"
+	premake.gcc.cxx = "arm-none-eabi-g++"
+	premake.gcc.ar = "arm-none-eabi-ar"
+	
 end
 
 if _OPTIONS["with-jack"] then
@@ -341,6 +373,7 @@ if _OPTIONS["with-jack-only"] then
 	WITH_OSS = 0
 	WITH_ALSA = 0
 	WITH_VITA_HOMEBREW = 0
+	WITH_N3DS_HOMEBREW = 0
 	WITH_COREAUDIO = 0
 	WITH_JACK = 1
 	WITH_NOSOUND = 0
@@ -364,6 +397,7 @@ if _OPTIONS["with-miniaudio-only"] then
 	WITH_OSS = 0
 	WITH_ALSA = 0
 	WITH_VITA_HOMEBREW = 0
+	WITH_N3DS_HOMEBREW = 0
 	WITH_COREAUDIO = 0
 	WITH_JACK = 0
 	WITH_NOSOUND = 0
@@ -412,6 +446,7 @@ print ("WITH_MINIAUDIO  = ", WITH_MINIAUDIO)
 print ("WITH_NOSOUND    = ", WITH_NOSOUND)
 print ("WITH_COREAUDIO  = ", WITH_COREAUDIO)
 print ("WITH_VITA_HOMEBREW = ", WITH_VITA_HOMEBREW)
+print ("WITH_N3DS_HOMEBREW = ", WITH_N3DS_HOMEBREW)
 print ("WITH_TOOLS      = ", WITH_TOOLS)
 print ("")
 
@@ -449,7 +484,7 @@ solution "SoLoud"
 	-- TODO: SoLoud could do with some better platform determination. genie
 	--       doesn't do this well on it's own and is recommended to setup this
 	--       manually. See https://github.com/bkaradzic/bx/blob/master/scripts/toolchain.lua
-if (WITH_VITA_HOMEBREW == 0) then
+if (WITH_VITA_HOMEBREW == 0 and WITH_N3DS_HOMEBREW == 0) then
 	configuration { "gmake" }
 		buildoptions { 
 			"-msse4.1", 
@@ -778,6 +813,15 @@ if (WITH_VITA_HOMEBREW == 1) then
 	}
 end
 
+if (WITH_N3DS_HOMEBREW == 1) then
+		defines { "WITH_N3DS_HOMEBREW" }
+	files {
+	  "../src/backend/n3ds_homebrew/**.c*"
+	  }
+	includedirs {
+	  "../include"
+	}
+end
 
 if (WITH_JACK == 1) then
 	defines { "WITH_JACK" }

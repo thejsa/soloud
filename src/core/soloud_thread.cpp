@@ -24,6 +24,9 @@ freely, subject to the following restrictions:
 
 #if defined(_WIN32)||defined(_WIN64)
 #include <windows.h>
+#elif defined(_3DS)
+#include <inttypes.h>
+#include <3ds.h>
 #else
 #include <inttypes.h>
 #include <pthread.h>
@@ -126,6 +129,96 @@ namespace SoLoud
 			return GetTickCount();
 		}
 
+#elif defined(_3DS) // Nintendo 3DS
+		struct ThreadHandleData
+        {
+            ::Thread thread;
+        };
+
+		void * createMutex()
+		{
+			LightLock *mutex;
+			LightLock_Init(mutex);
+		
+			return (void*)mutex;
+		}
+
+		void destroyMutex(void *aHandle)
+		{
+			// unused
+			(void)(aHandle);
+		}
+
+		void lockMutex(void *aHandle)
+		{
+			LightLock *mutex = (LightLock*)aHandle;
+			if (mutex)
+			{
+				LightLock_Lock(mutex);
+			}
+		}
+
+		void unlockMutex(void *aHandle)
+		{
+			LightLock *mutex = (LightLock*)aHandle;
+			if (mutex)
+			{
+				LightLock_Unlock(mutex);
+			}
+		}
+
+		struct soloud_thread_data
+		{
+			threadFunction mFunc;
+			void *mParam;
+		};
+
+		static void threadfunc(void * d)
+		{
+			soloud_thread_data *p = (soloud_thread_data *)d;
+			p->mFunc(p->mParam);
+			delete p;
+		}
+
+		ThreadHandle createThread(threadFunction aThreadFunction, void *aParameter)
+		{
+			soloud_thread_data *d = new soloud_thread_data;
+			d->mFunc = aThreadFunction;
+			d->mParam = aParameter;
+
+			::Thread h = threadCreate(threadfunc, d, 0x8000, 0x18, 2, false);
+			if(h == NULL) return NULL;
+            
+            ThreadHandleData *threadHandle = new ThreadHandleData;
+            threadHandle->thread = h;
+            return threadHandle;
+		}
+
+		void sleep(int aMSec)
+		{
+			//usleep(aMSec * 1000);
+			struct timespec req = {0};
+			req.tv_sec = 0;
+			req.tv_nsec = aMSec * 1000000L;
+			nanosleep(&req, (struct timespec *)NULL);
+		}
+
+        void wait(ThreadHandle aThreadHandle)
+        {
+            threadJoin(aThreadHandle->thread, UINT64_MAX);
+        }
+
+        void release(ThreadHandle aThreadHandle)
+        {
+            delete aThreadHandle;
+        }
+
+		int getTimeMillis()
+		{
+			struct timespec spec;
+			clock_gettime(CLOCK_REALTIME, &spec);
+			return spec.tv_sec * 1000 + (int)(spec.tv_nsec / 1.0e6);
+		}
 #else // pthreads
         struct ThreadHandleData
         {
